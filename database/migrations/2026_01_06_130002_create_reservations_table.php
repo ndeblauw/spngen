@@ -16,6 +16,9 @@ return new class extends Migration
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
+            
+            // Add unique constraint to prevent duplicate reservations
+            $table->unique(['event_id', 'user_id']);
         });
     }
 

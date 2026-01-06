@@ -19,21 +19,32 @@ class DatabaseSeeder extends Seeder
         // Create 50 users
         User::factory(50)->create();
 
+        // Get all user IDs once to avoid N+1 queries
+        $allUserIds = User::pluck('id')->toArray();
+
         // Create 15 activities
-        Activity::factory(15)->create()->each(function ($activity) {
+        Activity::factory(15)->create()->each(function ($activity) use ($allUserIds) {
             // Create between 2 and 10 events per activity
             $eventCount = rand(2, 10);
             Event::factory($eventCount)->create([
                 'activity_id' => $activity->id,
-            ])->each(function ($event) {
+            ])->each(function ($event) use ($allUserIds) {
                 // Create between 2 and 20 reservations per event
                 $reservationCount = rand(2, 20);
-                $users = User::inRandomOrder()->limit($reservationCount)->get();
                 
-                foreach ($users as $user) {
+                // Ensure we don't try to create more reservations than available users
+                $reservationCount = min($reservationCount, count($allUserIds));
+                
+                // Randomly select unique user IDs for this event
+                $selectedUserIds = array_rand(array_flip($allUserIds), $reservationCount);
+                
+                // Handle case where only one user is selected (array_rand returns int, not array)
+                $selectedUserIds = is_array($selectedUserIds) ? $selectedUserIds : [$selectedUserIds];
+                
+                foreach ($selectedUserIds as $userId) {
                     Reservation::factory()->create([
                         'event_id' => $event->id,
-                        'user_id' => $user->id,
+                        'user_id' => $userId,
                     ]);
                 }
             });
