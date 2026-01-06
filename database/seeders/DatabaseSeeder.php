@@ -36,10 +36,7 @@ class DatabaseSeeder extends Seeder
                 $reservationCount = min($reservationCount, count($allUserIds));
                 
                 // Randomly select unique user IDs for this event
-                $selectedUserIds = array_rand(array_flip($allUserIds), $reservationCount);
-                
-                // Handle case where only one user is selected (array_rand returns int, not array)
-                $selectedUserIds = is_array($selectedUserIds) ? $selectedUserIds : [$selectedUserIds];
+                $selectedUserIds = collect($allUserIds)->random($reservationCount)->toArray();
                 
                 foreach ($selectedUserIds as $userId) {
                     Reservation::factory()->create([
